@@ -1,8 +1,7 @@
 ## NPM Page 
 
-```bash
 [https://www.npmjs.com/package/reactjs-photo-image-gallery](https://www.npmjs.com/package/reactjs-photo-image-gallery)
-```
+
 
 ## Installation
 
