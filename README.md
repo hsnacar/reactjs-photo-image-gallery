@@ -1,7 +1,6 @@
-## NPM Page 
+## NPM Page
 
 [https://www.npmjs.com/package/reactjs-photo-image-gallery](https://www.npmjs.com/package/reactjs-photo-image-gallery)
-
 
 ## Installation
 
@@ -9,10 +8,9 @@
 npm i reactjs-photo-image-gallery
 ```
 
-
 ## Usage
 
-```
+```javascript
 import { PI_Gallery } from "reactjs-photo-image-gallery";
 ```
 
@@ -38,10 +36,10 @@ const pi_gallery = {
 };
 ```
 
+```javascript
+<PI_Gallery pi_gallery={pi_gallery} />
 ```
- <PI_Gallery pi_gallery={pi_gallery} />
-```
-
 
 ## License
+
 [MIT](https://choosealicense.com/licenses/mit/)
