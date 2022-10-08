@@ -1,7 +1,7 @@
 ## NPM Page 
 
 ```bash
-https://www.npmjs.com/package/reactjs-photo-image-gallery
+[https://www.npmjs.com/package/reactjs-photo-image-gallery]https://www.npmjs.com/package/reactjs-photo-image-gallery
 ```
 
 ## Installation
@@ -17,7 +17,7 @@ npm i reactjs-photo-image-gallery
 import { PI_Gallery } from "reactjs-photo-image-gallery";
 ```
 
-```
+```javascript
 const pi_gallery = {
   width: "500px",
   height: "300px",
