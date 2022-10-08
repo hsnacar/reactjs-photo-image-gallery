@@ -1,3 +1,18 @@
+## NPM Page 
+
+```bash
+https://www.npmjs.com/package/reactjs-photo-image-gallery
+```
+
+## Installation
+
+```bash
+npm i reactjs-photo-image-gallery
+```
+
+
+## Usage
+
 ```
 import { PI_Gallery } from "reactjs-photo-image-gallery";
 ```
@@ -27,3 +42,7 @@ const pi_gallery = {
 ```
  <PI_Gallery pi_gallery={pi_gallery} />
 ```
+
+
+## License
+[MIT](https://choosealicense.com/licenses/mit/)
