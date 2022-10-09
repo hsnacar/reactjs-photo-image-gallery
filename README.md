@@ -23,14 +23,26 @@ const pi_gallery = {
     {
       src: "/images/photo-1.jpg",
       alt: "Photo 1",
+      url_enable: true,
+      url: "#",
+      target: "_blank",
+      title: "Photo 1 Title"
     },
     {
       src: "/images/photo-2.jpg",
       alt: "Photo 2",
+      url_enable: true,
+      url: "#",
+      target: "_self",
+      title: "Photo 2 Title"
     },
     {
       src: "/images/photo-3.jpg",
       alt: "Photo 3",
+      url_enable: false,
+      url: "#",
+      target: "_blank",
+      title: "Photo 3 Title"
     },
   ],
 };
