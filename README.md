@@ -1,18 +1,26 @@
-## NPM Page
+## Features
 
-[https://www.npmjs.com/package/reactjs-photo-image-gallery](https://www.npmjs.com/package/reactjs-photo-image-gallery)
+- Responsive design
+- Linkable image
+- Image title
+- Light/Dark mode
+
 
 ## Installation
+
+Install my-project with npm
 
 ```bash
 npm i reactjs-photo-image-gallery
 ```
+    
+## Import
 
-## Usage
 
 ```javascript
 import { PI_Gallery } from "reactjs-photo-image-gallery";
 ```
+## Usage/Examples
 
 ```javascript
 const pi_gallery = {
@@ -48,10 +56,23 @@ const pi_gallery = {
 };
 ```
 
+## Call
+
 ```javascript
-<PI_Gallery pi_gallery={pi_gallery} />
+ <PI_Gallery pi_gallery={pi_gallery} />
 ```
+
+## 🔗 Links
+[![portfolio](https://img.shields.io/badge/my_portfolio-000?style=for-the-badge&logo=ko-fi&logoColor=white)](https://github.com/hsnacar)
+[![linkedin](https://img.shields.io/badge/linkedin-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/hasan-acar-018007247/)
+
+
+## Demo
+
+Coming soon
+
 
 ## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
+
