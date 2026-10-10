@@ -10,8 +10,9 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
     props.pi_gallery?.pi_list ??
     [];
 
-  // Resolve interval from modern interval or legacy pi_gallery.timer (default 5000ms)
-  const interval = props.interval ?? props.pi_gallery?.timer ?? 5000;
+  // Resolve interval with safety fallback (prevent negative or zero interval freeze)
+  const rawInterval = props.interval ?? props.pi_gallery?.timer ?? 5000;
+  const interval = typeof rawInterval === 'number' && rawInterval > 0 ? Math.max(rawInterval, 200) : 5000;
 
   // Resolve dimensions
   const width = props.width ?? props.pi_gallery?.width;
@@ -42,8 +43,12 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
 
   const total = items.length;
 
+  // Resilient safe index calculation against dynamic list shrinking
+  const safeIndex = total > 0 ? (currentIndex >= total || currentIndex < 0 ? 0 : currentIndex) : 0;
+
   const goToSlide = useCallback(
     (index: number) => {
+      if (total === 0) return;
       let targetIndex = index;
       if (index < 0) {
         targetIndex = total - 1;
@@ -59,12 +64,12 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
   );
 
   const goToNext = useCallback(() => {
-    goToSlide(currentIndex + 1);
-  }, [goToSlide, currentIndex]);
+    goToSlide(safeIndex + 1);
+  }, [goToSlide, safeIndex]);
 
   const goToPrev = useCallback(() => {
-    goToSlide(currentIndex - 1);
-  }, [goToSlide, currentIndex]);
+    goToSlide(safeIndex - 1);
+  }, [goToSlide, safeIndex]);
 
   // Auto-play timer effect with memory leak cleanup
   useEffect(() => {
@@ -81,23 +86,23 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
     };
   }, [autoPlay, total, interval, pauseOnHover, isHovered, goToNext]);
 
-  // Handle out-of-bounds index if items change dynamically
+  // Sync state if items change dynamically and index becomes out of bounds
   useEffect(() => {
     if (currentIndex >= total && total > 0) {
       setCurrentIndex(0);
     }
   }, [total, currentIndex]);
 
-  // Scroll active thumbnail into view
+  // Scroll active thumbnail into view safely
   useEffect(() => {
     if (showThumbnails && activeThumbRef.current) {
-      activeThumbRef.current.scrollIntoView({
+      activeThumbRef.current.scrollIntoView?.({
         behavior: 'smooth',
         block: 'nearest',
         inline: 'nearest',
       });
     }
-  }, [currentIndex, showThumbnails]);
+  }, [safeIndex, showThumbnails]);
 
   // Keyboard navigation handler
   const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -113,12 +118,12 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
 
   // Touch swipe gestures
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!enableSwipe || total <= 1) return;
+    if (!enableSwipe || total <= 1 || e.touches.length === 0) return;
     touchStartXRef.current = e.touches[0].clientX;
   };
 
   const handleTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!enableSwipe || total <= 1 || touchStartXRef.current === null) return;
+    if (!enableSwipe || total <= 1 || touchStartXRef.current === null || e.changedTouches.length === 0) return;
     const touchEndX = e.changedTouches[0].clientX;
     const diff = touchStartXRef.current - touchEndX;
 
@@ -142,13 +147,14 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
           maxHeight: height,
           ...props.style,
         }}
+        data-testid="rpi-gallery-empty"
       >
         <span>No images provided</span>
       </div>
     );
   }
 
-  const currentItem = items[currentIndex];
+  const currentItem = items[safeIndex];
   if (!currentItem) {
     return null;
   }
@@ -159,13 +165,14 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
     <img
       className="rpi-gallery-img pi_gallery_img"
       src={currentItem.src}
-      alt={currentItem.alt || currentItem.title || `Gallery slide ${currentIndex + 1}`}
+      alt={currentItem.alt || currentItem.title || `Gallery slide ${safeIndex + 1}`}
       style={{ objectFit }}
+      data-testid="rpi-gallery-main-img"
     />
   );
 
   const titleElement = showTitle && currentItem.title ? (
-    <span className="rpi-gallery-title pi_gallery_title">
+    <span className="rpi-gallery-title pi_gallery_title" data-testid="rpi-gallery-title">
       {currentItem.title}
     </span>
   ) : null;
@@ -176,6 +183,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
       target={currentItem.target || '_self'}
       rel={currentItem.target === '_blank' ? 'noreferrer noopener' : undefined}
       className="rpi-gallery-link"
+      data-testid="rpi-gallery-link"
     >
       {imageElement}
       {titleElement}
@@ -194,6 +202,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
         maxWidth: width,
         ...props.style,
       }}
+      data-testid="rpi-gallery-wrapper"
     >
       <div
         ref={containerRef}
@@ -208,8 +217,9 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
         onKeyDown={handleKeyDown}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
+        data-testid="rpi-gallery-container"
       >
-        <div key={currentIndex} className="rpi-gallery-slide pi_gallery_slide">
+        <div key={safeIndex} className="rpi-gallery-slide pi_gallery_slide">
           {content}
         </div>
 
@@ -219,6 +229,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
             type="button"
             className="rpi-gallery-arrow rpi-gallery-arrow-prev"
             aria-label="Previous slide"
+            data-testid="rpi-prev-button"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -237,6 +248,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
             type="button"
             className="rpi-gallery-arrow rpi-gallery-arrow-next"
             aria-label="Next slide"
+            data-testid="rpi-next-button"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -251,15 +263,16 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
 
         {/* Dot Indicators */}
         {showIndicators && total > 1 && (
-          <div className="rpi-gallery-indicators" role="tablist">
+          <div className="rpi-gallery-indicators" role="tablist" data-testid="rpi-indicators">
             {items.map((_, idx) => (
               <button
                 key={idx}
                 type="button"
                 role="tab"
-                aria-selected={idx === currentIndex}
+                aria-selected={idx === safeIndex}
                 aria-label={`Go to slide ${idx + 1}`}
-                className={`rpi-gallery-dot ${idx === currentIndex ? 'rpi-dot-active' : ''}`}
+                data-testid={`rpi-dot-${idx}`}
+                className={`rpi-gallery-dot ${idx === safeIndex ? 'rpi-dot-active' : ''}`}
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -273,9 +286,9 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
 
       {/* Thumbnail Strip */}
       {showThumbnails && total > 1 && (
-        <div className="rpi-gallery-thumbnails" role="tablist" aria-label="Thumbnails">
+        <div className="rpi-gallery-thumbnails" role="tablist" aria-label="Thumbnails" data-testid="rpi-thumbnails">
           {items.map((item, idx) => {
-            const isActive = idx === currentIndex;
+            const isActive = idx === safeIndex;
             return (
               <button
                 key={idx}
@@ -284,6 +297,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
                 role="tab"
                 aria-selected={isActive}
                 aria-label={`Thumbnail ${idx + 1}`}
+                data-testid={`rpi-thumb-${idx}`}
                 className={`rpi-gallery-thumb-btn ${isActive ? 'rpi-thumb-active' : ''}`}
                 style={{
                   height: typeof thumbnailHeight === 'number' ? `${thumbnailHeight}px` : thumbnailHeight,
