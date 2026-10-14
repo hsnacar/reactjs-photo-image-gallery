@@ -23,7 +23,11 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
   const showArrows = props.showArrows ?? true;
   const showIndicators = props.showIndicators ?? true;
   const showThumbnails = props.showThumbnails ?? false;
-  const thumbnailHeight = props.thumbnailHeight ?? 60;
+  const rawThumbHeight = props.thumbnailHeight ?? 60;
+  const isNumericThumb = typeof rawThumbHeight === 'number' || (!isNaN(Number(rawThumbHeight)) && !isNaN(parseFloat(String(rawThumbHeight))));
+  const numThumbHeight = Number(rawThumbHeight);
+  const thumbHeightStyle = isNumericThumb ? `${numThumbHeight}px` : String(rawThumbHeight);
+  const thumbWidthStyle = isNumericThumb ? `${numThumbHeight * 1.5}px` : `calc(${rawThumbHeight} * 1.5)`;
   const keyboardNav = props.keyboardNav ?? true;
   const enableSwipe = props.enableSwipe ?? true;
   const showTitle = props.showTitle ?? true;
@@ -33,18 +37,18 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const touchStartXRef = useRef<number | null>(null);
+  // Reserved for future scroll/focus management
   const containerRef = useRef<HTMLDivElement>(null);
   const activeThumbRef = useRef<HTMLButtonElement>(null);
   const onSlideChangeRef = useRef(props.onSlideChange);
-
-  useEffect(() => {
-    onSlideChangeRef.current = props.onSlideChange;
-  }, [props.onSlideChange]);
+  onSlideChangeRef.current = props.onSlideChange;
 
   const total = items.length;
 
   // Resilient safe index calculation against dynamic list shrinking
   const safeIndex = total > 0 ? (currentIndex >= total || currentIndex < 0 ? 0 : currentIndex) : 0;
+  const currentIndexRef = useRef(safeIndex);
+  currentIndexRef.current = safeIndex;
 
   const goToSlide = useCallback(
     (index: number) => {
@@ -64,12 +68,15 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
   );
 
   const goToNext = useCallback(() => {
-    goToSlide(safeIndex + 1);
-  }, [goToSlide, safeIndex]);
+    goToSlide(currentIndexRef.current + 1);
+  }, [goToSlide]);
 
   const goToPrev = useCallback(() => {
-    goToSlide(safeIndex - 1);
-  }, [goToSlide, safeIndex]);
+    goToSlide(currentIndexRef.current - 1);
+  }, [goToSlide]);
+
+  const goToNextRef = useRef(goToNext);
+  goToNextRef.current = goToNext;
 
   // Auto-play timer effect with memory leak cleanup
   useEffect(() => {
@@ -78,13 +85,13 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
     }
 
     const timer = setInterval(() => {
-      goToNext();
+      goToNextRef.current();
     }, interval);
 
     return () => {
       clearInterval(timer);
     };
-  }, [autoPlay, total, interval, pauseOnHover, isHovered, goToNext]);
+  }, [autoPlay, total, interval, pauseOnHover, isHovered]);
 
   // Sync state if items change dynamically and index becomes out of bounds
   useEffect(() => {
@@ -206,7 +213,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
     >
       <div
         ref={containerRef}
-        tabIndex={keyboardNav ? 0 : undefined}
+        tabIndex={keyboardNav ? 0 : -1}
         className={`rpi-gallery pi_gallery rpi-theme-${theme} ${titleElement ? 'rpi-has-title' : ''}`}
         style={{
           maxHeight: height,
@@ -214,7 +221,7 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
         }}
         onMouseEnter={() => pauseOnHover && setIsHovered(true)}
         onMouseLeave={() => pauseOnHover && setIsHovered(false)}
-        onKeyDown={handleKeyDown}
+        onKeyDown={keyboardNav ? handleKeyDown : undefined}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         data-testid="rpi-gallery-container"
@@ -300,8 +307,8 @@ export const PhotoGallery: React.FC<PhotoGalleryProps> = (props) => {
                 data-testid={`rpi-thumb-${idx}`}
                 className={`rpi-gallery-thumb-btn ${isActive ? 'rpi-thumb-active' : ''}`}
                 style={{
-                  height: typeof thumbnailHeight === 'number' ? `${thumbnailHeight}px` : thumbnailHeight,
-                  width: typeof thumbnailHeight === 'number' ? `${thumbnailHeight * 1.5}px` : `calc(${thumbnailHeight} * 1.5)`,
+                  height: thumbHeightStyle,
+                  width: thumbWidthStyle,
                 }}
                 onClick={() => goToSlide(idx)}
               >

@@ -365,4 +365,54 @@ describe('PhotoGallery Component', () => {
       expect(screen.getByTestId('rpi-gallery-main-img')).toHaveAttribute('src', mockImages[1].src);
     });
   });
+
+  describe('Regression Bug Fixes (BUG-01 to BUG-06)', () => {
+    it('BUG-02: does not restart autoplay interval timer on slide changes', () => {
+      render(<PhotoGallery images={mockImages} interval={5000} autoPlay={true} />);
+      expect(screen.getByTestId('rpi-gallery-main-img')).toHaveAttribute('src', mockImages[0].src);
+
+      // Advance by 3000ms, then user manually clicks next
+      act(() => {
+        vi.advanceTimersByTime(3000);
+      });
+      fireEvent.click(screen.getByTestId('rpi-next-button'));
+      expect(screen.getByTestId('rpi-gallery-main-img')).toHaveAttribute('src', mockImages[1].src);
+
+      // Advance by remaining 2000ms (total 5000ms from start) -> should advance to slide 2
+      act(() => {
+        vi.advanceTimersByTime(2000);
+      });
+      expect(screen.getByTestId('rpi-gallery-main-img')).toHaveAttribute('src', mockImages[2].src);
+    });
+
+    it('BUG-03: supports unitless numeric string for thumbnailHeight', () => {
+      render(<PhotoGallery images={mockImages} showThumbnails={true} thumbnailHeight="60" />);
+      const thumb = screen.getByTestId('rpi-thumb-0');
+      expect(thumb).toHaveStyle({ height: '60px', width: '90px' });
+    });
+
+    it('BUG-05: always calls the latest onSlideChange callback', () => {
+      let callCount = 0;
+      const { rerender } = render(
+        <PhotoGallery images={mockImages} autoPlay={false} onSlideChange={() => { callCount = 1; }} />
+      );
+
+      // Rerender with a new callback reference
+      rerender(
+        <PhotoGallery images={mockImages} autoPlay={false} onSlideChange={() => { callCount = 2; }} />
+      );
+
+      fireEvent.click(screen.getByTestId('rpi-next-button'));
+      expect(callCount).toBe(2);
+    });
+
+    it('BUG-06: sets tabIndex to -1 and removes onKeyDown handler when keyboardNav is false', () => {
+      render(<PhotoGallery images={mockImages} autoPlay={false} keyboardNav={false} />);
+      const container = screen.getByTestId('rpi-gallery-container');
+      expect(container).toHaveAttribute('tabIndex', '-1');
+
+      fireEvent.keyDown(container, { key: 'ArrowRight' });
+      expect(screen.getByTestId('rpi-gallery-main-img')).toHaveAttribute('src', mockImages[0].src);
+    });
+  });
 });
