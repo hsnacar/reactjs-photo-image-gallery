@@ -14,3 +14,6 @@ yarn-error.log*
 # Environment & OS
 .DS_Store
 .env*
+
+bugs/
+AGENT_MAP.md
